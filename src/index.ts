@@ -4,11 +4,11 @@ export function transformToTs(json:any) {
 }
 
 type Typeof = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-interface Middle {
+export interface Middle {
     [key: string] : {
-        type: Typeof | Middle;
+        type: Typeof;
         isRequire: boolean
-    }
+    } | Middle
 }
 export function transformToMiddleObj(json:any,middle:Middle={}):Middle {
     if(isObject(json)) {
@@ -19,7 +19,7 @@ export function transformToMiddleObj(json:any,middle:Middle={}):Middle {
                     isRequire: true
                 }
             } else {
-                // middle[key] = transformToMiddleObj(value,{})
+                middle[key] = transformToMiddleObj(value,{})
             }
         })
     }
