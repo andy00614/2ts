@@ -1,7 +1,7 @@
-import { transformToMiddleObj } from "../src";
+import { transformToMiddleObj,middle2TypeString, Middle,Typeof } from "../src";
 
 describe("通用方法", () => {
-  const simpleMiddleResult = {
+  const simpleMiddleResult:Middle = {
     name: {
       type: "string",
       isRequire: true,
@@ -16,7 +16,7 @@ describe("通用方法", () => {
     },
   };
 
-  const hardMiddleResult = {
+  const hardMiddleResult = [{
     name: {
       type: "string",
       isRequire: true,
@@ -29,15 +29,14 @@ describe("通用方法", () => {
       type: "string",
       isRequire: true,
     },
-    info: {
-      a: {
-        type: "number",
-        isRequire: true,
-      },
-      b: { type: "string", isRequire: true },
+  },{
+    a: {
+      type: "number",
+      isRequire: true,
     },
-  };
-
+    b: { type: "string", isRequire: true },
+  }];
+  
   it("转化为中间形式", () => {
     const json = {
       name: "andy",
@@ -45,7 +44,7 @@ describe("通用方法", () => {
       gender: "man",
     };
     const res = transformToMiddleObj(json);
-    expect(res).toStrictEqual(simpleMiddleResult);
+    expect(res).toEqual([simpleMiddleResult]);
   });
 
   it("嵌套对象的转换", () => {
@@ -59,9 +58,16 @@ describe("通用方法", () => {
       },
     };
     const res = transformToMiddleObj(json);
-    expect(res).toStrictEqual(hardMiddleResult);
+    console.log(res);
+    expect(res.length).toBe(2);
   });
-  it("将middle对象转化为字符串", () => {
-    const expect
-  });
+  // it("将middle对象转化为字符串", () => {
+  //   const expectJson = {
+  //     name: 'string',
+  //     age: 'number',
+  //     gender: 'string'
+  //   }
+  //   const res = middle2TypeString(hardMiddleResult)
+  //   console.log(res);
+  // });
 });

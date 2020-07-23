@@ -1,4 +1,4 @@
-import { transformToTs, transformToMiddleObj } from '../src'
+import { transformToTs } from '../src'
 
 describe('对象类型', () => {
   it('普通的对象类型', () => {

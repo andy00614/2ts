@@ -4,28 +4,31 @@ export function transformToTs(json:any) {
 
 }
 
-type Typeof = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-export interface Middle {
-    [key: string] : {
-        type: Typeof;
-        isRequire: boolean
-    } | Middle
+export type Typeof = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+interface AstNode {
+    type: Typeof;
+    isRequire: boolean
+}
+export interface Ast {
+    [key: string] : AstNode
 }
 
-interface ResObj { 
-    [key: string]: Middle
+interface TypeObj { 
+    [key: string]: Typeof | TypeObj
 }
-export function middle2TypeString(middle:Middle):string {
-    const res:ResObj  = Object.keys(middle).reduce((resObj:ResObj,curKey:string) => {
-        const curValue = middle[curKey]
-        if(!isObject(curValue)) {
-            resObj[curKey] = <string>middle[curKey].type
-        }
-    },{})
-    return JSON.stringify(res)
+export function middle2TypeString(middle:Ast,typeObj:TypeObj={}):TypeObj {
+    Object.entries(middle).forEach(([key,value]) => {
+        console.log(key,value);
+        // if(isObject(value)) {
+        //     typeObj[key] = (value as MiddleItem).type
+        // } else {
+        //     typeObj[key] = middle2TypeString(value as Ast,{})
+        // }
+    })
+    return typeObj
 }
 
-export function transformToMiddleObj(json:any,middle:Middle={}):Middle {
+export function transformToMiddleObj(json:any,middle:Ast={},middleArr:Ast[]=[]):Ast[] {
     if(isObject(json)) {
         Object.entries(<{[key:string]:any}>json).forEach(([key,value]) => {
             if(!isObject(value)) {
@@ -34,9 +37,10 @@ export function transformToMiddleObj(json:any,middle:Middle={}):Middle {
                     isRequire: true
                 }
             } else {
-                middle[key] = transformToMiddleObj(value,{})
+                transformToMiddleObj(value,{},middleArr)
             }
         })
     }
-    return middle
+    middleArr.push(middle)
+    return middleArr
 }
