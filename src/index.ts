@@ -1,34 +1,44 @@
-import { isObject } from './utils'
-export function transformToTs(json:any) {
-  const json2Middle = transformToMiddleObj(json)
+import { isObject,firstUppercase,isNumber } from './utils'
 
+export function transformToTs(json:any):string {
+  const ast = json2Ast(json)
+  return Ast2Interface(ast)
 }
 
 export type Typeof = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-interface AstNode {
-    type: Typeof;
+export interface AstNode {
+    type: Typeof | string;
     isRequire: boolean
 }
 export interface Ast {
     [key: string] : AstNode
 }
-
-interface TypeObj { 
-    [key: string]: Typeof | TypeObj
+export function setSymbolLabel(label:string):string {
+    const endLetter = label.slice(-1)
+    const endNumber = isNumber(endLetter) ? String(Number(endLetter) + 1) : '1'  
+    return label + endNumber
 }
-export function middle2TypeString(middle:Ast,typeObj:TypeObj={}):TypeObj {
-    Object.entries(middle).forEach(([key,value]) => {
-        console.log(key,value);
-        // if(isObject(value)) {
-        //     typeObj[key] = (value as MiddleItem).type
-        // } else {
-        //     typeObj[key] = middle2TypeString(value as Ast,{})
-        // }
+
+export function Ast2Interface(astNodes:GAst[]): string {
+    const labelSet:string[] = []
+    let interfaceString = ''
+    astNodes.forEach(ast => {
+        const label = labelSet.includes(firstUppercase(ast.label)) ? setSymbolLabel(firstUppercase(ast.label)) : firstUppercase(ast.label) 
+        labelSet.push(label)
+        interfaceString += `interface ${label} {\n`
+        Object.entries(ast.node).forEach(([key,value]) => {
+            interfaceString+=`\t ${key}: ${value.type};\n`
+        })
+        interfaceString += '};\n'
     })
-    return typeObj
+    return interfaceString
 }
 
-export function transformToMiddleObj(json:any,middle:Ast={},middleArr:Ast[]=[]):Ast[] {
+export type GAst = {
+    label: string;
+    node: Ast
+}
+export function json2Ast(json:any,middle:Ast={},middleArr:GAst[]=[],key?:string):GAst[] {
     if(isObject(json)) {
         Object.entries(<{[key:string]:any}>json).forEach(([key,value]) => {
             if(!isObject(value)) {
@@ -37,10 +47,14 @@ export function transformToMiddleObj(json:any,middle:Ast={},middleArr:Ast[]=[]):
                     isRequire: true
                 }
             } else {
-                transformToMiddleObj(value,{},middleArr)
+                middle[key] = {
+                    type: firstUppercase(key),
+                    isRequire: true
+                }
+                json2Ast(value,{},middleArr,key)
             }
         })
     }
-    middleArr.push(middle)
+    middleArr.unshift({label:key ?? 'RootInterface',node:middle})
     return middleArr
 }
