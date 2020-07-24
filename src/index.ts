@@ -6,12 +6,12 @@ export function transformToTs(json:any):string {
 }
 
 export type Typeof = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
-export interface AstNode {
+export interface LeafNode {
     type: Typeof | string;
     isRequire: boolean
 }
 export interface Ast {
-    [key: string] : AstNode
+    [key: string] : LeafNode
 }
 export function setSymbolLabel(label:string):string {
     const endLetter = label.slice(-1)
