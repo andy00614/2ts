@@ -50,31 +50,31 @@ export type GAst = {
   node: Ast;
 };
 
-export function json2Ast(
-  json: any,
-  middle: Ast = {},
-  middleArr: GAst[] = [],
-  key?: string
-): GAst[] {
-  if (isObject(json)) {
-    Object.entries(<{ [key: string]: any }>json).forEach(([key, value]) => {
-      if (!isObject(value)) {
-        middle[key] = {
-          type: typeof value,
-          isRequire: true,
-        };
-      } else {
-        middle[key] = {
-          type: firstUppercase(key),
-          isRequire: true,
-        };
-        json2Ast(value, {}, middleArr, key);
-      }
-    });
-  }
-  middleArr.unshift({ label: key ?? "RootInterface", node: middle });
-  return middleArr;
-}
+// export function json2Ast(
+//   json: any,
+//   middle: Ast = {},
+//   middleArr: GAst[] = [],
+//   key?: string
+// ): GAst[] {
+//   if (isObject(json)) {
+//     Object.entries(<{ [key: string]: any }>json).forEach(([key, value]) => {
+//       if (!isObject(value)) {
+//         middle[key] = {
+//           type: typeof value,
+//           isRequire: true,
+//         };
+//       } else {
+//         middle[key] = {
+//           type: firstUppercase(key),
+//           isRequire: true,
+//         };
+//         json2Ast(value, {}, middleArr, key);
+//       }
+//     });
+//   }
+//   middleArr.unshift({ label: key ?? "RootInterface", node: middle });
+//   return middleArr;
+// }
 
 const initalAst: AstNew = {
   label: "Root",
@@ -112,35 +112,64 @@ function baseValArr2Ast(arr: any[]): AstNew[] {
   }));
 }
 
-export function newJson2Ast(
+function getAstModel(label: string, type: Typeof): AstNew {
+  return {
+    label,
+    node: {
+      type: getType(type),
+      isRequire: true,
+    },
+  };
+}
+
+function arr2Ast(arr:Array<object> | any[]) {
+    const isObjectArr = typeof arr[0] === 'object';
+    if(isObjectArr) {
+        return json2AstChild(arr[0], [])
+    }
+    return baseValArr2Ast(arr)
+}
+
+// 这个是使用于对象的形式的
+export function json2AstChild(
   json: any,
   astChildren: AstNew[] = <AstNew[]>initalAst.children
 ): AstNew[] {
-  if(Array.isArray(json)) {
-      return baseValArr2Ast(json)
-  }
   Object.entries(json).forEach(([key, value]) => {
-    const astItem: AstNew = {
-      label: key,
-      node: {
-        type: getType(<string>value),
-        isRequire: true,
-      },
-    };
+    const astItem = getAstModel(key, <Typeof>value);
 
     if (isObject(value)) {
-      astItem.children = newJson2Ast(value, []);
+      astItem.children = json2AstChild(value, []);
     }
 
     if (Array.isArray(value)) {
-        if(typeof value[0] === 'object') {
-            astItem.children = newJson2Ast(value[0],[])
-        } else {
-            astItem.children = newJson2Ast(value,[])
-        }
+        astItem.children = arr2Ast(value)
+    //   if (typeof value[0] === "object") {
+    //     astItem.children = json2AstChild(value[0], []);
+    //   } else {
+    //     astItem.children = baseValArr2Ast(value);
+    //   }
     }
-    
-    astChildren.push(astItem)
+    astChildren.push(astItem);
   });
   return astChildren;
+}
+
+export function addRoot(astChild: AstNew[], rootName?: string) {
+  const initalAst: AstNew = {
+    label: rootName || "Root",
+    node: {
+      type: rootName || "Root",
+      isRequire: true,
+    },
+    children: [],
+  };
+  initalAst.children = astChild;
+  return initalAst;
+}
+
+export function newJson2Ast(json: any, config?: {}) {
+  const jsonChild = json2AstChild(json, []);
+  const ast = addRoot(jsonChild);
+  return ast;
 }
