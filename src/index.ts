@@ -3,7 +3,7 @@ import { AstNew } from "./type";
 
 export function transformToTs(json: any): string {
   const ast = json2Ast(json);
-  return Ast2Interface(ast);
+//   return Ast2Interface(ast);
 }
 
 export type Typeof =
@@ -28,53 +28,11 @@ export function setSymbolLabel(label: string): string {
   return label + endNumber;
 }
 
-export function Ast2Interface(astNodes: GAst[]): string {
-  const labelSet: string[] = [];
-  let interfaceString = "";
-  astNodes.forEach((ast) => {
-    const label = labelSet.includes(firstUppercase(ast.label))
-      ? setSymbolLabel(firstUppercase(ast.label))
-      : firstUppercase(ast.label);
-    labelSet.push(label);
-    interfaceString += `interface ${label} {\n`;
-    Object.entries(ast.node).forEach(([key, value]) => {
-      interfaceString += `\t ${key}: ${value.type};\n`;
-    });
-    interfaceString += "};\n";
-  });
-  return interfaceString;
-}
-
 export type GAst = {
   label: string;
   node: Ast;
 };
 
-// export function json2Ast(
-//   json: any,
-//   middle: Ast = {},
-//   middleArr: GAst[] = [],
-//   key?: string
-// ): GAst[] {
-//   if (isObject(json)) {
-//     Object.entries(<{ [key: string]: any }>json).forEach(([key, value]) => {
-//       if (!isObject(value)) {
-//         middle[key] = {
-//           type: typeof value,
-//           isRequire: true,
-//         };
-//       } else {
-//         middle[key] = {
-//           type: firstUppercase(key),
-//           isRequire: true,
-//         };
-//         json2Ast(value, {}, middleArr, key);
-//       }
-//     });
-//   }
-//   middleArr.unshift({ label: key ?? "RootInterface", node: middle });
-//   return middleArr;
-// }
 
 const initalAst: AstNew = {
   label: "Root",
@@ -122,16 +80,16 @@ function getAstModel(label: string, type: Typeof): AstNew {
   };
 }
 
-function arr2Ast(arr:Array<object> | any[]) {
+export function arr2Ast(arr:Array<object> | any[]) {
     const isObjectArr = typeof arr[0] === 'object';
     if(isObjectArr) {
-        return json2AstChild(arr[0], [])
+        return object2Ast(arr[0], [])
     }
     return baseValArr2Ast(arr)
 }
 
 // 这个是使用于对象的形式的
-export function json2AstChild(
+export function object2Ast(
   json: any,
   astChildren: AstNew[] = <AstNew[]>initalAst.children
 ): AstNew[] {
@@ -139,18 +97,15 @@ export function json2AstChild(
     const astItem = getAstModel(key, <Typeof>value);
 
     if (isObject(value)) {
-      astItem.children = json2AstChild(value, []);
+      astItem.children = object2Ast(value, []);
     }
 
     if (Array.isArray(value)) {
         astItem.children = arr2Ast(value)
-    //   if (typeof value[0] === "object") {
-    //     astItem.children = json2AstChild(value[0], []);
-    //   } else {
-    //     astItem.children = baseValArr2Ast(value);
-    //   }
     }
+
     astChildren.push(astItem);
+
   });
   return astChildren;
 }
@@ -168,8 +123,62 @@ export function addRoot(astChild: AstNew[], rootName?: string) {
   return initalAst;
 }
 
-export function newJson2Ast(json: any, config?: {}) {
-  const jsonChild = json2AstChild(json, []);
+export function json2Ast(json: any, config?: {}) {
+  const jsonChild = object2Ast(json, []);
   const ast = addRoot(jsonChild);
   return ast;
+}
+
+// 转化成若干个interface单元，函数只处理其中的一个单元
+interface transferNodeItem extends LeafNode {
+  key: string;
+}
+export interface TransferInterfaceItem {
+  label: string,
+  nodes: Array<transferNodeItem>
+}
+export function transferNode2Interface(transferItem:TransferInterfaceItem): string {
+  const {nodes,label} = transferItem;
+  let interfaceString = `interface ${firstUppercase(label)} {\n`
+  nodes.forEach(node => {
+    const {type,key} = node
+    interfaceString += `\t ${key}: ${type};\n`
+  })
+  interfaceString += "};\n";
+  return interfaceString
+}
+
+// export function Ast2Interface(astNodes: TransferInterfaceItem): string {
+//     const labelSet: string[] = [];
+//     let interfaceString = "";
+//     astNodes.forEach((ast) => {
+//       const label = labelSet.includes(firstUppercase(ast.label))
+//         ? setSymbolLabel(firstUppercase(ast.label))
+//         : firstUppercase(ast.label);
+//       labelSet.push(label);
+//       interfaceString += `interface ${label} {\n`;
+//       Object.entries(ast.node).forEach(([key, value]) => {
+//         interfaceString += `\t ${key}: ${value.type};\n`;
+//       });
+//       interfaceString += "};\n";
+//     });
+//     return interfaceString;
+//   }
+
+
+// 每一个children都会生成生成一个interface
+export function ast2TransferNode(ast:AstNew,res:TransferInterfaceItem[]=[]):TransferInterfaceItem[] {
+    if(ast.children) {
+      const transferItem:TransferInterfaceItem = {
+        label: ast.label,
+        nodes: ast.children.map(item => ({
+          key: item.label,
+          isRequire: item.node.isRequire,
+          type:['object','array'].includes(item.node.type)  ? item.label : item.node.type,
+        }))
+      }
+      res.push(transferItem)
+      ast.children.forEach(item => ast2TransferNode(item,res))
+    }
+    return res
 }

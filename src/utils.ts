@@ -9,3 +9,8 @@ export function firstUppercase(str:string):string {
 export function isNumber(val: string | number): boolean {
     return !isNaN(Number(val))
 }
+
+export function consoleJson(json: object) {
+    console.log(JSON.stringify(json, null, "  "));
+  }
+  
