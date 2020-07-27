@@ -1,6 +1,6 @@
 {
   "name": "2interface",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Interfaces become interfaces",
   "main": "build/src/index.js",
   "scripts": {
@@ -11,9 +11,15 @@
     "dev": "webpack-dev-server",
     "commit": "npx git-cz"
   },
-  "keywords": ["typescript","interface","json","to-interface"],
+  "keywords": [
+    "typescript",
+    "interface",
+    "json",
+    "to-interface"
+  ],
   "author": "andy00614",
-  "license": "ISC",
+  "git repository": "https://github.com/andy00614/2ts",
+  "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.6",
