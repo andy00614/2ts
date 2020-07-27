@@ -1,6 +1,6 @@
 {
   "name": "2interface",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Interfaces become interfaces",
   "main": "build/src/index.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "to-interface"
   ],
   "author": "andy00614",
-  "git repository": "https://github.com/andy00614/2ts",
+  "repository": "https://github.com/andy00614/2ts",
   "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.8.4",
